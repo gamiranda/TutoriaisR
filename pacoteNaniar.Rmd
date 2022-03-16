@@ -1,0 +1,172 @@
+---
+title: "Introdução ao pacote `naniar` para tratamento de NA's"
+subtitle: "Pacote `naniar`" 
+author: "Ana Carolina Cavallo e Gabriel Miranda"
+date: "16/08/2021"
+output: html_document
+---
+
+No mundo real, é muito comum que as bases de dados não sejam totalmente preenchidas quando criadas. Sendo assim, na análise de dados, nos deparamos com a necessidade de investigar os dados faltantes.
+
+O `R` possui um pacote capaz de auxiliar nessa tarefa. O pacote `naniar` possui diversas funções para tal finalidade. Aqui trataremos das principais ferramentas.
+
+# 1 - Primeiros passos 
+
+##### 1.1 - Carregando os pacotes necessários
+
+```{r include=TRUE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(naniar)
+```
+
+##### 1.2 - Lendo a base de dados
+
+```{r message=FALSE, warning=FALSE, include=TRUE}
+df = read_csv("german_credit_risk_target.csv")
+
+head(df)
+```
+
+A base de dados possui 11 variáveis referentes a informações bancárias. Algumas delas são:
+
+* Sex: Sexo do cliente;
+* Age: Idade do cliente;
+* Saving accounts: Conta Poupança;
+* Checking account: Conta Corrente;
+* Duration: Duração do empréstimo, em meses.
+
+
+# 2 - Funções
+
+##### 2.1 - Algumas funções primárias
+
+Inicialmente, pode ser interessante realizar uma rápida análise a cerca dos dados faltantes. Para tal tarefa, existem algumas funções que retornam valores que podem auxiliar nessas análises preliminares.
+
+```{r}
+# Total de células com dados faltantes
+
+# Obs: Total de células na base de dados - Número de Linhas x Número de Colunas
+# 1000 x 11 = 11000
+
+n_miss(df)
+```
+```{r}
+# Total de células sem dados faltantes
+n_complete(df)
+```
+
+```{r}
+# Total de variáveis com dados faltantes
+n_var_miss(df)
+```
+
+```{r}
+# Quais variáveis possuem NA's
+miss_var_which(df)
+```
+
+```{r}
+# Proporção de variáveis com dados faltantes
+prop_miss_var(df)
+```
+
+
+##### 2.2 - A função `gg_miss_var()`
+
+```{r warning=FALSE}
+gg_miss_var(df) +
+  # Função labs() do pacote ggplot2(tidyverse) para editar o nome dos eixos
+  labs(x = "Variáveis", 
+       y = "Dados faltantes")
+```
+
+A função `gg_miss_var()` nos mostra a quantidade de dados faltantes em todas as variáveis da base de dados.
+
+Outros argumentos podem ser úteis para:
+
+* Agrupar em relação a uma outra variável, com o argumento `facet`;
+* Mostrar a porcentagem de dados faltantes em cada variável, com o argumento `show_pct`.
+
+```{r warning=FALSE}
+gg_miss_var(df,
+            show_pct = TRUE,
+            facet = Sex) +
+  labs(x = "Variáveis",
+       y = "Dados faltantes (%)")
+```
+
+
+##### 2.3 - A função `gg_miss_upset()`
+
+```{r}
+gg_miss_upset(df)
+```
+
+
+A função `gg_miss_upset()` nos mostra quais variáveis possuem dados faltantes, a quantidade de cada uma separadamente e sua intersecção.
+
+Por exemplo, no gráfico acima, *Checking account* possui 295 *NA's*, *Saving Account* possui 84 *NA's* e 99 observações possuem dados faltantes em ambas variáveis.
+
+Pode-se fazer alterações com as seguintes finalidades:
+
+* Alterar a cor das barras do gráfico, com o argumento `main.bar.color`;
+* Alterar a cor do indicador de variável, com o argumento `matrix.color`;
+* Alterar a cor da legenda do quantitativo, com o argumento `sets.bar.color`;
+* Alterar o nome do eixo y, com o argumento `mainbar.y.label`;
+* Alterar o nome da legenda do quantitativo, com o argumento `sets.x.label`;
+* Alterar a ordem das barras do gráfico de decrescente para crescente, com o argumento `decreasing = F`.
+
+
+```{r}
+gg_miss_upset(df, 
+              main.bar.color = "blue", 
+              matrix.color = "blue",
+              sets.bar.color = "blue",
+              mainbar.y.label = "Tamanho da intersecção",
+              sets.x.label = "Quantitativo",
+              decreasing = F)
+```
+
+##### 2.4 - A função `vis_miss()`
+
+```{r}
+vis_miss(df)
+```
+
+A função `vis_miss` nos mostra a porcentagem de *NA's* presentes na base e uma visualização gráfica dos *NA's* em cada variável, sendo possível identificar a posição desse dado faltante.
+
+Pode-se fazer alterações com as seguintes finalidades:
+
+* Reordernar de forma decrescente pelo número de *NA's*, com o argumento `sort_miss = T`;
+* Ocultar a porcentagem de *NA's* em cada coluna, com o argumento `show_perc_col = F`.
+
+```{r}
+vis_miss(df,
+         sort_miss = T,
+         show_perc_col = F) +
+  labs(y = "Observações")
+```
+
+
+##### 2.5 - A função `add_any_miss()`
+
+```{r}
+df_2 = add_any_miss(df)
+head(df_2$any_miss_all)
+```
+
+A função `add_any_miss()` cria uma nova variável na base de dados, que indica se existe algum dado faltante na observação (linha).
+
+Pode-se fazer alterações com as seguintes finalidades:
+
+* Nomear a nova variável, com o argumento `label`;
+* Alterar o nome das categorias, com os argumentos `missing` e `complete` .
+
+```{r}
+df_2 = add_any_miss(df, 
+                    label = "Possui NA?",
+                    missing = "Sim",
+                    complete = "Não")
+head(df_2$`Possui NA?_all`)
+```
+
